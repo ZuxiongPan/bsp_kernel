@@ -6,5 +6,3 @@
 source /etc/profile
 
 hostname bpim2u-pzx
-
-echo "Hello ARM Linux"
