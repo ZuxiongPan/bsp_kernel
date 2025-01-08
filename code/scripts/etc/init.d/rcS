@@ -1,0 +1,10 @@
+#! /bin/sh
+
+/bin/mount -a
+/sbin/mdev -s
+
+source /etc/profile
+
+hostname bpim2u-pzx
+
+echo "Hello ARM Linux"
