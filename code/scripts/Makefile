@@ -11,18 +11,19 @@ BUSYBOX_DIR := $(TOOLS_DIR)/busybox-1.36.0
 KERNEL_DIR := $(TOP_DIR)/linux-6.6
 ROOT_DIR := $(TARGET_DIR)/root
 CROSS_COMPILER_PREFIX := $(COMPILER_DIR)/bin/arm-linux-gnueabihf-
-CUSINC_DIR := $(CODE_DIR)/include
+BSPINC_DIR := $(CODE_DIR)/include
 jN := j8
 
 # qemu-system-arm -M bpim2u -m 512M -nographic -kernel ./zImage -dtb ./sun8i-r40-bananapi-m2-ultra.dtb -drive if=sd,file=./sdcard,format=raw
 # qemu-system-arm -M bpim2u -m 512M -nographic -kernel ./zImage -append 'root=/dev/mmcblk0 rw console=ttyS0,115200n8 init=/linuxrc' -dtb ./sun8i-r40-bananapi-m2-ultra.dtb -drive if=sd,file=./sdcard,format=raw
 
-export TOP_DIR TARGET_DIR BUSYBOX_DIR ROOT_DIR CROSS_COMPILER_PREFIX 
-export SCRIPTS_DIR COMPILER_DIR KERNEL_DIR CUSINC_DIR
+export TOP_DIR TARGET_DIR BUSYBOX_DIR ROOT_DIR CROSS_COMPILER_PREFIX CODE_DIR 
+export SCRIPTS_DIR COMPILER_DIR KERNEL_DIR BSPINC_DIR ARCHITECTURE
 
-.PHONY: prepare all clean busybox busybox_clean kernel kernel_clean target
+.PHONY: prepare all clean busybox busybox_clean kernel kernel_clean \
+	target target_clean drivers drivers_clean
 
-all: prepare busybox kernel target
+all: prepare busybox kernel drivers target
 busybox: prepare
 
 prepare:
@@ -47,12 +48,21 @@ busybox:
 busybox_clean:
 	make ARCH=$(ARCHITECTURE) CROSS_COMPILE=$(CROSS_COMPILER_PREFIX) -C $(BUSYBOX_DIR) distclean
 	
+drivers:
+	make -C $(CODE_DIR)/drivers all
+	
+drivers_clean:
+	make -C $(CODE_DIR)/drivers clean
+	
 target:
 	./mkroot.sh
 	cp $(KERNEL_DIR)/arch/arm/boot/zImage $(TARGET_DIR) -f
 	cp $(KERNEL_DIR)/arch/arm/boot/dts/allwinner/sun8i-r40-bananapi-m2-ultra.dtb $(TARGET_DIR) -f
 	
+target_clean:
+	rm -rf $(TARGET_DIR)/*
+	
 clean:
 	make busybox_clean
 	make kernel_clean
-	rm -rf $(TARGET_DIR)/*
+	make target_clean
