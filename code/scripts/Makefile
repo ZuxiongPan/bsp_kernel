@@ -21,9 +21,9 @@ export TOP_DIR TARGET_DIR BUSYBOX_DIR ROOT_DIR CROSS_COMPILER_PREFIX CODE_DIR
 export SCRIPTS_DIR COMPILER_DIR KERNEL_DIR BSPINC_DIR ARCHITECTURE
 
 .PHONY: prepare all clean busybox busybox_clean kernel kernel_clean \
-	target target_clean drivers drivers_clean
+	target target_clean drivers drivers_clean applications applications_clean
 
-all: prepare busybox kernel drivers target
+all: prepare busybox kernel drivers applications target
 busybox: prepare
 
 prepare:
@@ -53,6 +53,13 @@ drivers:
 	
 drivers_clean:
 	make -C $(CODE_DIR)/drivers clean
+	
+applications:
+	make -C $(CODE_DIR)/applications all
+	make -C $(CODE_DIR)/applications install
+	
+applications_clean:
+	make -C $(CODE_DIR)/applications clean
 	
 target:
 	./mkroot.sh
