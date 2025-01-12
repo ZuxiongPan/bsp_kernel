@@ -21,7 +21,7 @@ export TOP_DIR TARGET_DIR BUSYBOX_DIR ROOT_DIR CROSS_COMPILER_PREFIX CODE_DIR
 export SCRIPTS_DIR COMPILER_DIR KERNEL_DIR BSPINC_DIR ARCHITECTURE
 
 .PHONY: prepare all clean busybox busybox_clean kernel kernel_clean \
-	target target_clean drivers drivers_clean applications applications_clean
+	target drivers drivers_clean applications applications_clean
 
 all: prepare busybox kernel drivers applications target
 busybox: prepare
@@ -66,10 +66,9 @@ target:
 	cp $(KERNEL_DIR)/arch/arm/boot/zImage $(TARGET_DIR) -f
 	cp $(KERNEL_DIR)/arch/arm/boot/dts/allwinner/sun8i-r40-bananapi-m2-ultra.dtb $(TARGET_DIR) -f
 	
-target_clean:
-	rm -rf $(TARGET_DIR)/*
-	
 clean:
+	rm -rf $(TARGET_DIR)/*
 	make busybox_clean
 	make kernel_clean
-	make target_clean
+	make drivers_clean
+	make applications_clean
