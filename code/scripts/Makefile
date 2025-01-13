@@ -14,6 +14,12 @@ CROSS_COMPILER_PREFIX := $(COMPILER_DIR)/bin/arm-linux-gnueabihf-
 BSPINC_DIR := $(CODE_DIR)/include
 jN := j8
 
+# dd if=/dev/zero of=./test bs=4K count=128
+# sudo mkfs.ext2 ./test
+# sudo mount -t ext2 ./test /mnt/ -o loop
+# sudo cp -rf ./study/* /mnt/
+# sudo umount /mnt
+
 # qemu-system-arm -M bpim2u -m 512M -nographic -kernel ./zImage -dtb ./sun8i-r40-bananapi-m2-ultra.dtb -drive if=sd,file=./sdcard,format=raw
 # qemu-system-arm -M bpim2u -m 512M -nographic -kernel ./zImage -append 'root=/dev/mmcblk0 rw console=ttyS0,115200n8 init=/linuxrc' -dtb ./sun8i-r40-bananapi-m2-ultra.dtb -drive if=sd,file=./sdcard,format=raw
 
