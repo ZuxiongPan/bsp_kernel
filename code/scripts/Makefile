@@ -2,6 +2,8 @@
 SCRIPTS_DIR := $(shell pwd)
 CODE_DIR := $(SCRIPTS_DIR)/..
 TOP_DIR := $(SCRIPTS_DIR)/../..
+CUSKERNEL_DIR := $(CODE_DIR)/bearkernel
+CUSUSER_DIR := $(CODE_DIR)/bearuser
 TOOLS_DIR := $(TOP_DIR)/tools
 COMPILER_DIR := $(TOOLS_DIR)/arm-linux-gnueabihf-14.0.0
 TARGET_DIR := $(TOP_DIR)/target
@@ -23,8 +25,8 @@ jN := j8
 # qemu-system-arm -M bpim2u -m 512M -nographic -kernel ./zImage -dtb ./sun8i-r40-bananapi-m2-ultra.dtb -drive if=sd,file=./sdcard,format=raw
 # qemu-system-arm -M bpim2u -m 512M -nographic -kernel ./zImage -append 'root=/dev/mmcblk0 rw console=ttyS0,115200n8 init=/linuxrc' -dtb ./sun8i-r40-bananapi-m2-ultra.dtb -drive if=sd,file=./sdcard,format=raw
 
-export TOP_DIR TARGET_DIR BUSYBOX_DIR ROOT_DIR CROSS_COMPILER_PREFIX CODE_DIR 
-export SCRIPTS_DIR COMPILER_DIR KERNEL_DIR BSPINC_DIR ARCHITECTURE
+export CUSKERNEL_DIR COMPILER_DIR ROOT_DIR SCRIPTS_DIR TARGET_DIR
+export KERNEL_DIR BSPINC_DIR ARCHITECTURE CROSS_COMPILER_PREFIX
 
 .PHONY: prepare all clean busybox busybox_clean kernel kernel_clean \
 	target drivers drivers_clean applications applications_clean
@@ -55,17 +57,17 @@ busybox_clean:
 	make ARCH=$(ARCHITECTURE) CROSS_COMPILE=$(CROSS_COMPILER_PREFIX) -C $(BUSYBOX_DIR) distclean
 	
 drivers:
-	make -C $(CODE_DIR)/drivers all
+	make -C $(CUSKERNEL_DIR)/drivers all
 	
 drivers_clean:
-	make -C $(CODE_DIR)/drivers clean
+	make -C $(CUSKERNEL_DIR)/drivers clean
 	
 applications:
-	make -C $(CODE_DIR)/applications all
-	make -C $(CODE_DIR)/applications install
+	make -C $(CUSUSER_DIR)/applications all
+	make -C $(CUSUSER_DIR)/applications install
 	
 applications_clean:
-	make -C $(CODE_DIR)/applications clean
+	make -C $(CUSUSER_DIR)/applications clean
 	
 target:
 	./mkroot.sh
