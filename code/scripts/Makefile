@@ -45,6 +45,7 @@ kernel:
 	
 kernel_clean:
 	make ARCH=$(ARCHITECTURE) CROSS_COMPILE=$(CROSS_COMPILER_PREFIX) -C $(KERNEL_DIR) distclean
+	make -C $(CUSKERNEL_DIR)/kernel clean
 
 busybox:
 	make ARCH=$(ARCHITECTURE) CROSS_COMPILE=$(CROSS_COMPILER_PREFIX) -C $(BUSYBOX_DIR) defconfig
@@ -80,3 +81,4 @@ clean:
 	make kernel_clean
 	make drivers_clean
 	make applications_clean
+	rm -f $(KERNEL_DIR)/cuskernel
