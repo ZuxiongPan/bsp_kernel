@@ -1,7 +1,7 @@
 #ifndef __COMM_FUNCS__
 #define __COMM_FUNCS__
 
-#define ptr_invalid(p) (!p)
+#define PTR_INVALID(p) (!p)
 
 static inline const char* ptrstr(const char* s)
 {

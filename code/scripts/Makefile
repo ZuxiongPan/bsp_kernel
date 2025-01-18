@@ -29,7 +29,7 @@ export CUSKERNEL_DIR COMPILER_DIR ROOT_DIR SCRIPTS_DIR TARGET_DIR
 export KERNEL_DIR BSPINC_DIR ARCHITECTURE CROSS_COMPILER_PREFIX
 
 .PHONY: prepare all clean busybox busybox_clean kernel kernel_clean \
-	target drivers drivers_clean applications applications_clean
+	target drivers drivers_clean applications applications_clean cuskernel_clean
 
 all: prepare busybox kernel drivers applications target
 busybox: prepare
@@ -45,7 +45,7 @@ kernel:
 	
 kernel_clean:
 	make ARCH=$(ARCHITECTURE) CROSS_COMPILE=$(CROSS_COMPILER_PREFIX) -C $(KERNEL_DIR) distclean
-	make -C $(CUSKERNEL_DIR)/kernel clean
+	make cuskernel_clean
 
 busybox:
 	make ARCH=$(ARCHITECTURE) CROSS_COMPILE=$(CROSS_COMPILER_PREFIX) -C $(BUSYBOX_DIR) defconfig
@@ -62,7 +62,10 @@ drivers:
 	
 drivers_clean:
 	make -C $(CUSKERNEL_DIR)/drivers clean
-	
+
+cuskernel_clean:
+	make -C $(CUSKERNEL_DIR)/kernel clean
+
 applications:
 	make -C $(CUSUSER_DIR)/applications all
 	make -C $(CUSUSER_DIR)/applications install
