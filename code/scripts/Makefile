@@ -2,8 +2,8 @@
 SCRIPTS_DIR := $(shell pwd)
 CODE_DIR := $(SCRIPTS_DIR)/..
 TOP_DIR := $(SCRIPTS_DIR)/../..
-CUSKERNEL_DIR := $(CODE_DIR)/bearkernel
-CUSUSER_DIR := $(CODE_DIR)/bearuser
+CUSKERNEL_DIR := $(CODE_DIR)/pzxkernel
+CUSUSER_DIR := $(CODE_DIR)/pzxuser
 TOOLS_DIR := $(TOP_DIR)/tools
 COMPILER_DIR := $(TOOLS_DIR)/arm-linux-gnueabihf-14.0.0
 TARGET_DIR := $(TOP_DIR)/target

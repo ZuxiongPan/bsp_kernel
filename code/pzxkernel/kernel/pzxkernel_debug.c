@@ -1,4 +1,4 @@
-#include <kernel/bearkernel_debug.h>
+#include <kernel/pzxkernel_debug.h>
 #include <linux/printk.h>
 
 static inline unsigned char invalid_ptr(void *ptr)
