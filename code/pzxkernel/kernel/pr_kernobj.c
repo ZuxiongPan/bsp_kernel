@@ -9,14 +9,18 @@
 			printk("invalid %s\n", str); \
 			return ; } \
 		} while(0)
+			
+#define prefix "[kernobj]"
 
 void print_filesystem(void *pobj)
 {
 	PTR_INVALID_RET(pobj, "struct file_system_type");
 	
 	struct file_system_type *pFsType = (struct file_system_type*)pobj;
-	printk("struct file_system_type members:\n");
-	printk("name: %s\n", ptrstr(pFsType->name));
+	printk(prefix"struct file_system_type members:\n");
+	printk("\tname: %s\n", ptrstr(pFsType->name));
+	printk("\tfs_flags: 0x%x\n", pFsType->fs_flags);
+	printk("\tfs_parameter_spec pos: 0x%llx\n", ptr_to_hex(pFsType->parameters));
 	
 	return ;
 }
