@@ -29,3 +29,25 @@ Host Machine:
 Qemu simulate for arm-architecture, board bpim2u
 
 Directories in project:
+
+.
+├── code			[customized code directory]
+│ ├── include		
+│ │   ├── kern		[kernel header files]
+│ │   └── ukcomm	[kernel and user common header files]
+│ ├── pzxkernel
+│ │   ├── drivers	[customized kernel drivers]
+│ │   └── kernel	[customized kernel code]
+│ ├── pzxuser
+│ │   └── applications	[user applications]
+│ └── scripts		[compile scripts]
+│     └── etc
+├── linux-6.6		[linux kernel source]
+├── target			[zImage, dtb and rootfs]
+└── tools
+    ├── arm-linux-gnueabihf-14.0.0	[cross-compiler]
+    └── busybox-1.36.0	[busybox directory]
+	
+code version 1.0.0
+code author pzx
+
