@@ -17,5 +17,6 @@ mkdir -p $ROOT_DIR/etc $ROOT_DIR/proc $ROOT_DIR/sys $ROOT_DIR/dev
 mkdir -p $ROOT_DIR/var $ROOT_DIR/modules $ROOT_DIR/lib $ROOT_DIR/mnt
 
 cp $SCRIPTS_DIR/etc/* $ROOT_DIR/etc/ -rf
+cp $SCRIPTS_DIR/boot.sh $TARGET_DIR/ -f
 
 echo "----- prepare OK -----"

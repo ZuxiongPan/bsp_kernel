@@ -17,21 +17,22 @@ BSPINC_DIR := $(CODE_DIR)/include
 jN := j8
 
 # dd if=/dev/zero of=./test bs=4K count=128
-# sudo mkfs.ext2 ./test
+# sudo mkfs.ext3 ./test
 # sudo mount -t ext2 ./test /mnt/ -o loop
 # sudo cp -rf ./study/* /mnt/
 # sudo umount /mnt
 
 # qemu-system-arm -M bpim2u -m 512M -nographic -kernel ./zImage -dtb ./sun8i-r40-bananapi-m2-ultra.dtb -drive if=sd,file=./sdcard,format=raw
+# qemu-system-arm -M bpim2u -m 512M -nographic -kernel ./zImage -dtb ./sun8i-r40-bananapi-m2-ultra.dtb -drive if=sd,file=./sdcard,format=raw -drive if=none,id=stick,format=raw,file=./usb.img -device usb-storage,drive=stick
 # qemu-system-arm -M bpim2u -m 512M -nographic -kernel ./zImage -append 'root=/dev/mmcblk0 rw console=ttyS0,115200n8 init=/linuxrc' -dtb ./sun8i-r40-bananapi-m2-ultra.dtb -drive if=sd,file=./sdcard,format=raw
 
 export CUSKERNEL_DIR COMPILER_DIR ROOT_DIR SCRIPTS_DIR TARGET_DIR
 export KERNEL_DIR BSPINC_DIR ARCHITECTURE CROSS_COMPILER_PREFIX
 
 .PHONY: prepare all clean busybox busybox_clean kernel kernel_clean \
-	target drivers drivers_clean applications applications_clean cuskernel_clean
+	target drivers drivers_clean user user_clean cuskernel_clean
 
-all: prepare busybox kernel drivers applications target
+all: prepare busybox kernel drivers user target
 busybox: prepare
 
 prepare:
@@ -66,12 +67,12 @@ drivers_clean:
 cuskernel_clean:
 	make -C $(CUSKERNEL_DIR)/kernel clean
 
-applications:
-	make -C $(CUSUSER_DIR)/applications all
-	make -C $(CUSUSER_DIR)/applications install
+user:
+	make -C $(CUSUSER_DIR) all
+	make -C $(CUSUSER_DIR) install
 	
-applications_clean:
-	make -C $(CUSUSER_DIR)/applications clean
+user_clean:
+	make -C $(CUSUSER_DIR) clean
 	
 target:
 	./mkroot.sh

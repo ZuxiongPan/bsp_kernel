@@ -28,6 +28,7 @@
 #include <net/sock.h>
 #include <net/netlink.h>
 #include <net/net_namespace.h>
+#include <ukcomm/comm_funcs.h>
 
 
 u64 uevent_seqnum;
@@ -474,8 +475,8 @@ int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
 	if (action == KOBJ_REMOVE)
 		kobj->state_remove_uevent_sent = 1;
 
-	pr_debug("kobject: '%s' (%p): %s\n",
-		 kobject_name(kobj), kobj, __func__);
+	pr_debug("kobject: '%s' address (%llx)\n",
+		 kobject_name(kobj), ptr_to_hex(kobj));
 
 	/* search the kset we belong to */
 	top_kobj = kobj;

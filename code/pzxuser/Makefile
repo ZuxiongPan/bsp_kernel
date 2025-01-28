@@ -5,6 +5,7 @@ LDFLAGS :=
 export CC CFLAGS LDFLAGS
 
 dirs-y += appctl/
+dirs-y += pserver/
 
 .PHONY: all install clean
 
