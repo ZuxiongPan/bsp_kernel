@@ -6,10 +6,10 @@
 #include <ukcomm/comm_ioctl.h>
 
 #define DEVICE_NAME "virtdev"
+#define PREV "[virt]: "
 
 extern ssize_t devfop_defread(struct file *file, char __user *buf, size_t count, loff_t *ppos);
 extern ssize_t devfop_defwrite(struct file *file, const char __user *buf, size_t count, loff_t *ppos);
-extern void traverse_filesystem(void);
 
 static dev_t devnum;
 static struct cdev virtChrDev;
@@ -18,11 +18,39 @@ static struct class *virtClass;
 static long virt_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	long ret = 0;
+	const char kernMsg[] = "this is a message from kernel";
+	struct ioctl_data kdata;
+	memset(&kdata, 0, sizeof(struct ioctl_data));
+	
+	printk(PREV"ioctl cmd is %x\n", cmd);
 	
 	switch(cmd)
 	{
-		case VIRTIOCTL_PR_FILESYSTEMS:
-			traverse_filesystem();
+		case VIOCTL_NO_DATA:
+			printk(PREV"here is no data transfer for ioctl\n");
+			break;
+		case VIOCTL_KWUR_STRING:
+			printk(PREV"write data to user space\n");
+			strncpy(kdata.buf, kernMsg, IOCTL_BUFSIZE);
+			kdata.dataLen = strlen(kdata.buf) + 1;
+			if(copy_to_user((void __user *)arg, &kdata, sizeof(struct ioctl_data)))
+				return -EFAULT;
+			break;
+		case VIOCTL_KRUW_STRING:
+			printk(PREV"read data to user space\n");
+			if(copy_from_user(&kdata, (void __user *)arg, sizeof(struct ioctl_data)))
+				return -EFAULT;
+			printk("get data from user space: len %d, data %s\n", kdata.dataLen, kdata.buf[0] ? kdata.buf : "nul");
+			break;
+		case VIOCTL_BIDIR_STRING:
+			if(copy_from_user(&kdata, (void __user *)arg, sizeof(struct ioctl_data)))
+				return -EFAULT;
+			printk("get data from user space: len %d, data %s\n", kdata.dataLen, kdata.buf[0] ? kdata.buf : "nul");
+			printk(PREV"write data to user space\n");
+			strncpy(kdata.buf, kernMsg, IOCTL_BUFSIZE);
+			kdata.dataLen = strlen(kdata.buf) + 1;
+			if(copy_to_user((void __user *)arg, &kdata, sizeof(struct ioctl_data)))
+				return -EFAULT;
 			break;
 		default:
 			ret = -EINVAL;

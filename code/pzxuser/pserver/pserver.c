@@ -4,49 +4,76 @@
 #include <unistd.h>
 #include <linux/netlink.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <ukcomm/comm_netlink.h>
 
-#define UEVENT_BUFFER_SIZE 2048
+const char *msg = "Hello from user space";
 
-int main(void) {
-    struct sockaddr_nl sa;
-    int sock;
-    char buf[UEVENT_BUFFER_SIZE];
-    int ret;
+int main(void)
+{
+    struct sockaddr_nl srcAddr, destAddr;
+    struct nlmsghdr *nlHeader = NULL;
+    struct iovec iov;
+    struct msghdr msgHeader;
+	int sockFd;
+	char buffer[NETLINK_MESSAGE_MAXLEN];
 
-    // 创建 NETLINK_KOBJECT_UEVENT 套接字
-    sock = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_KOBJECT_UEVENT);
-    if (sock < 0) {
-        perror("socket");
+	printf("user: current pid is %d\n", getpid());
+    sockFd = socket(AF_NETLINK, SOCK_RAW, NETLINK_PZXPROTOCOL);
+    if (sockFd < 0)
+	{
+        perror("create netlink socket");
         return -1;
     }
 
-    // 初始化 sockaddr_nl
-    memset(&sa, 0, sizeof(sa));
-    sa.nl_family = AF_NETLINK;
-    sa.nl_groups = 1; // 订阅多播组
+    memset(&srcAddr, 0, sizeof(srcAddr));
+    srcAddr.nl_family = AF_NETLINK;
+    srcAddr.nl_pid = getpid();
 
-    // 绑定套接字
-    if (bind(sock, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-        perror("bind");
-        close(sock);
+    if (bind(sockFd, (struct sockaddr *)&srcAddr, sizeof(srcAddr)) < 0)
+	{
+        perror("bind netlink socket");
+        close(sockFd);
         return -1;
     }
+	
+	memset(&destAddr, 0, sizeof(destAddr));
+	destAddr.nl_family = AF_NETLINK;
+	destAddr.nl_pid = 0;
+	
+	nlHeader = (struct nlmsghdr*)buffer;
+	nlHeader->nlmsg_len = NETLINK_MESSAGE_MAXLEN;
+	nlHeader->nlmsg_type = 0;
+	nlHeader->nlmsg_flags = 0;
+	nlHeader->nlmsg_pid = getpid();
+	memcpy(NLMSG_DATA(nlHeader), msg, strlen(msg) + 1);
+	
+	iov.iov_base = (void*)nlHeader;
+	iov.iov_len = nlHeader->nlmsg_len;
+	msgHeader.msg_name = (void*)&destAddr;
+	msgHeader.msg_namelen = sizeof(destAddr);
+	msgHeader.msg_iov = &iov;
+	msgHeader.msg_iovlen = 1;
+	
+	if(sendmsg(sockFd, &msgHeader, 0) < 0)
+	{
+		perror("send netlink message failed\n");
+		close(sockFd);
+		return -1;
+	}
+	
+	do {
+		if(recvmsg(sockFd, &msgHeader, 0) < 0)
+		{
+			perror("receive netlink message failed\n");
+			continue;
+		}
+		
+		printf("receive message length from kernel: %d\n", nlHeader->nlmsg_len);
+		printf("receive message from kernel: %s\n", (char*)NLMSG_DATA(nlHeader));
+		break;
+	} while(1);
 
-    printf("Listening for uevents...\n");
-
-    // 监听内核发来的事件
-    while (1) {
-        ret = recv(sock, buf, sizeof(buf), 0);
-        if (ret < 0) {
-            perror("recv");
-            break;
-        }
-
-        // 打印事件数据
-        buf[ret] = '\0'; // 确保字符串以 null 结尾
-        printf("Received uevent:\n%s\n", buf);
-    }
-
-    close(sock);
+    close(sockFd);
     return 0;
 }

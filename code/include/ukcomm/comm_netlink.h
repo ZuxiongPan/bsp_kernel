@@ -2,5 +2,6 @@
 #define __COMM_NETLINK__
 
 #define NETLINK_PZXPROTOCOL 31
+#define NETLINK_MESSAGE_MAXLEN 512
 
 #endif

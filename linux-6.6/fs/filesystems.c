@@ -17,7 +17,6 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/fs_parser.h>
-#include <kern/pr_kernobj.h>
 
 /*
  * Handling of filesystem drivers list.
@@ -293,16 +292,3 @@ struct file_system_type *get_fs_type(const char *name)
 }
 
 EXPORT_SYMBOL(get_fs_type);
-
-void traverse_filesystem(void)
-{
-	struct file_system_type **p;
-	read_lock(&file_systems_lock);
-	for (p = &file_systems; *p; p = &(*p)->next)
-		print_filesystem(*p);
-	read_unlock(&file_systems_lock);
-	
-	return ;
-}
-EXPORT_SYMBOL(traverse_filesystem);
-

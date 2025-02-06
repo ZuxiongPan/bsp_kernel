@@ -16,9 +16,9 @@ CROSS_COMPILER_PREFIX := $(COMPILER_DIR)/bin/arm-linux-gnueabihf-
 BSPINC_DIR := $(CODE_DIR)/include
 jN := j8
 
-# dd if=/dev/zero of=./test bs=4K count=128
-# sudo mkfs.ext3 ./test
-# sudo mount -t ext2 ./test /mnt/ -o loop
+# dd if=/dev/zero of=./usb.img bs=4K count=128
+# sudo mkfs.ext2 ./usb.img
+# sudo mount -t ext2 ./usb.img /mnt/ -o loop
 # sudo cp -rf ./study/* /mnt/
 # sudo umount /mnt
 
@@ -84,5 +84,5 @@ clean:
 	make busybox_clean
 	make kernel_clean
 	make drivers_clean
-	make applications_clean
+	make user_clean
 	rm -f $(KERNEL_DIR)/cuskernel
