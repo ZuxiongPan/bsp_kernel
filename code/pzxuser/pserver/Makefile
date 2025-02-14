@@ -1,5 +1,5 @@
 TARGET := pserver
-RELY := pserver.o
+RELY := message.o pserver_handle.o pserver.o 
 
 .PHONY: all install clean
 

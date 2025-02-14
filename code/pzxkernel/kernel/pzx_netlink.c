@@ -8,45 +8,107 @@
 #include <linux/string.h>
 #include <linux/init.h>
 #include <ukcomm/comm_netlink.h>
+#include <ukcomm/comm_funcs.h>
 
-#define PREV "[pzx netlink]: "
+#define fmt "[pzx netlink]: "
+
+const char* msgTypeString[] = 
+{
+	[MSG_RECEIVED] = "message received",
+	[MSG_ESTABLISH] = "message establish",
+	[MSG_DISCONNECT] = "message disconnect",
+	[MSG_FUNCTIONAL] = "message with data",
+	[MSG_INVALID] = "invalid message",
+};
 
 static struct sock *pzxSock = NULL;
-static pid_t userPid = 0;
+static pid_t userPid = -1;
 
-const char *response = "Message received success!";
+static struct sk_buff* make_message(enum msg_type msgType, unsigned int msgId, \
+	unsigned int payloadLen, void *msgData)
+{
+	struct nlmsghdr *nlHeader;
+	struct sk_buff *skb;
+	unsigned int payloadRealLen = (payloadLen > MSG_PAYLOAD_MAXLEN) ? MSG_PAYLOAD_MAXLEN : payloadLen;
+	
+	// create ack message
+	skb = nlmsg_new(NETLINK_MESSAGE_MAXLEN, GFP_KERNEL);
+	if(PTR_INVALID(skb))
+	{
+		pr_err(fmt"alloc skbuff failed!\n");
+		return NULL;
+	}
+	nlHeader = nlmsg_put(skb, userPid, 0, 0, NETLINK_MESSAGE_MAXLEN, 0);
+	if(PTR_INVALID(nlHeader))
+	{
+		kfree_skb(skb);
+		pr_err(fmt"failed to put data into skbuff!\n");
+		return NULL;
+	}
+	struct pzx_netlink_msg *pkmsg = (struct pzx_netlink_msg *)NLMSG_DATA(nlHeader);
+	pkmsg->msgType = msgType;
+	pkmsg->msgId = msgId;
+	
+	if(msgType == MSG_RECEIVED)
+		pkmsg->payloadLen = 0;
+	else if(msgType == MSG_FUNCTIONAL)
+	{
+		pkmsg->payloadLen = payloadLen;
+		memcpy(pkmsg->payload, msgData, payloadRealLen);
+	}
+	
+	return skb;
+}
 
 static void pzx_netlink_recv(struct sk_buff *skb)
 {
-	struct nlmsghdr *nlHeader;
-	struct sk_buff *skbOut;
-	struct nlmsghdr *nlHeaderOut;
-	int msgLen = 0;
-	
-	nlHeader = nlmsg_hdr(skb);
-	userPid = nlHeader->nlmsg_pid;
-	
-	pr_info(PREV"receive message from user space: %s, user pid: %d\n", (char*)NLMSG_DATA(nlHeader), userPid);
-	
-	msgLen = strlen(response) + 1;
-	skbOut = nlmsg_new(NETLINK_MESSAGE_MAXLEN, GFP_KERNEL);
-	if(NULL == skbOut)
+	if(PTR_INVALID(skb))
 	{
-		printk(PREV"failed to alloc new skb memory\n");
+		pr_err(fmt"sk_buff is NULL!\n");
 		return ;
 	}
 	
-	nlHeaderOut = nlmsg_put(skbOut, userPid, 0, 0, msgLen, 0);
-	if(NULL == nlHeaderOut)
+	struct nlmsghdr *nlHeader = nlmsg_hdr(skb);
+	if(PTR_INVALID(nlHeader) || !nlmsg_ok(nlHeader, skb->len))
 	{
-		kfree_skb(skbOut);
-		printk(PREV"failed to put netlink message\n");
+		pr_err(fmt"netlink data is error!\n");
 		return ;
 	}
+	
+	struct pzx_netlink_msg *pumsg = (struct pzx_netlink_msg *)NLMSG_DATA(nlHeader);
+	pr_info(fmt"receive message from user space: %s.\n", msgTypeString[pumsg->msgType]);
 
-	memcpy(NLMSG_DATA(nlHeaderOut), response, msgLen);
-	
-	netlink_unicast(pzxSock, skbOut, userPid, MSG_DONTWAIT);
+	switch(pumsg->msgType)
+	{
+		case MSG_ESTABLISH:
+			if(userPid == -1)
+			{
+				userPid = nlHeader->nlmsg_pid;	// only set once
+				struct sk_buff *skbRet = make_message(MSG_RECEIVED, pumsg->msgId, 0, NULL);
+				if(!PTR_INVALID(skbRet))
+				{
+					pr_info(fmt"inform user space connect established.\n");
+					netlink_unicast(pzxSock, skbRet, userPid, MSG_DONTWAIT);
+				}
+				else
+					pr_err(fmt"make acknowledge message failed\n");
+			}
+			else
+				pr_err(fmt"try to establish twice, current pid is %d, new pid is %d.\n", \
+					userPid, nlHeader->nlmsg_pid);
+			break;
+		case MSG_DISCONNECT:
+			userPid = -1;
+			pr_info(fmt"message disconnect is received.\n");
+			break;
+		case MSG_RECEIVED:
+			pr_info(fmt"message %x is received.\n", pumsg->msgId);
+			break;
+		case MSG_INVALID:
+		default:
+			pr_err(fmt"invalid message!\n");
+			break;
+	}
 	
 	return ;
 }
@@ -60,11 +122,11 @@ static int pzx_netlink_init(struct net *net)
 	pzxSock = netlink_kernel_create(net, NETLINK_PZXPROTOCOL, &pzxCfg);
 	if(NULL == pzxSock)
 	{
-		printk(PREV"netlink socket create failed, reason: no memory\n");
+		pr_err(fmt"netlink socket create failed, reason: no memory!\n");
 		return -ENODEV;
 	}
 	
-	printk(PREV"netlink socket create success\n");
+	pr_info(fmt"netlink socket create success!\n");
 	
 	return 0;
 }
@@ -74,7 +136,7 @@ static void pzx_netlink_exit(struct net *net)
 	if(NULL != pzxSock)
 		netlink_kernel_release(pzxSock);
 	
-	printk(PREV"netlink release ok\n");
+	pr_info(fmt"netlink release ok!\n");
 	
 	return ;
 }
