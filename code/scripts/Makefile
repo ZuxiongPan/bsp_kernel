@@ -4,6 +4,7 @@ CODE_DIR := $(SCRIPTS_DIR)/..
 TOP_DIR := $(SCRIPTS_DIR)/../..
 CUSKERNEL_DIR := $(CODE_DIR)/pzxkernel
 CUSUSER_DIR := $(CODE_DIR)/pzxuser
+CONFIG_DIR := $(CODE_DIR)/configs
 TOOLS_DIR := $(TOP_DIR)/tools
 COMPILER_DIR := $(TOOLS_DIR)/arm-linux-gnueabihf-14.0.0
 TARGET_DIR := $(TOP_DIR)/target
@@ -26,7 +27,7 @@ jN := j8
 # qemu-system-arm -M bpim2u -m 512M -nographic -kernel ./zImage -dtb ./sun8i-r40-bananapi-m2-ultra.dtb -drive if=sd,file=./sdcard,format=raw -drive if=none,id=stick,format=raw,file=./usb.img -device usb-storage,drive=stick
 # qemu-system-arm -M bpim2u -m 512M -nographic -kernel ./zImage -append 'root=/dev/mmcblk0 rw console=ttyS0,115200n8 init=/linuxrc' -dtb ./sun8i-r40-bananapi-m2-ultra.dtb -drive if=sd,file=./sdcard,format=raw
 
-export CUSKERNEL_DIR COMPILER_DIR ROOT_DIR SCRIPTS_DIR TARGET_DIR
+export CUSKERNEL_DIR COMPILER_DIR ROOT_DIR SCRIPTS_DIR TARGET_DIR CONFIG_DIR
 export KERNEL_DIR BSPINC_DIR ARCHITECTURE CROSS_COMPILER_PREFIX
 
 .PHONY: prepare all clean busybox busybox_clean kernel kernel_clean \

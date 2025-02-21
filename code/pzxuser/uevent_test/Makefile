@@ -1,5 +1,5 @@
-TARGET := pserver
-RELY := pserver.o 
+TARGET := uevent_test
+RELY := uevent_test.o
 
 .PHONY: all install clean
 
