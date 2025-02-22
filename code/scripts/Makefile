@@ -31,9 +31,9 @@ export CUSKERNEL_DIR COMPILER_DIR ROOT_DIR SCRIPTS_DIR TARGET_DIR CONFIG_DIR
 export KERNEL_DIR BSPINC_DIR ARCHITECTURE CROSS_COMPILER_PREFIX
 
 .PHONY: prepare all clean busybox busybox_clean kernel kernel_clean \
-	target drivers drivers_clean user user_clean cuskernel_clean
+	target user user_clean cuskernel_clean
 
-all: prepare busybox kernel drivers user target
+all: prepare busybox kernel user target
 busybox: prepare
 
 prepare:
@@ -59,14 +59,8 @@ busybox:
 busybox_clean:
 	make ARCH=$(ARCHITECTURE) CROSS_COMPILE=$(CROSS_COMPILER_PREFIX) -C $(BUSYBOX_DIR) distclean
 	
-drivers:
-	make -C $(CUSKERNEL_DIR)/drivers all
-	
-drivers_clean:
-	make -C $(CUSKERNEL_DIR)/drivers clean
-
 cuskernel_clean:
-	make -C $(CUSKERNEL_DIR)/kernel clean
+	make -C $(CUSKERNEL_DIR) clean
 
 user:
 	make -C $(CUSUSER_DIR) all
@@ -84,6 +78,5 @@ clean:
 	rm -rf $(TARGET_DIR)/*
 	make busybox_clean
 	make kernel_clean
-	make drivers_clean
 	make user_clean
 	rm -f $(KERNEL_DIR)/cuskernel

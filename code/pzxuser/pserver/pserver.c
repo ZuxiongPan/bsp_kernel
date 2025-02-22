@@ -1,14 +1,12 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <linux/netlink.h>
+#include <user/user_log.h>
 #include <ukcomm/comm_funcs.h>
 #include <ukcomm/comm_netlink.h>
 #include <ukcomm/netlink_msgid.h>
-
-#define pre "pserver: "
 
 static void send_netlink_message(int sock, struct sockaddr_nl *dest, unsigned int id, \
 	unsigned int dataLen, void *data);
@@ -23,7 +21,7 @@ int main()
 	int sockFd = socket(PF_NETLINK, SOCK_RAW, NETLINK_PZXPROTOCOL);
 	if(sockFd < 0)
 	{
-		perror(pre "create netlink socket failed!");
+		user_error("create netlink socket failed!");
 		return -1;
 	}
 	
@@ -34,7 +32,7 @@ int main()
 	
 	if(bind(sockFd, (struct sockaddr *)&srcAddr, sizeof(srcAddr)) < 0)
 	{
-		perror(pre "bind netlink socket failed!");
+		user_error("bind netlink socket failed!");
 		close(sockFd);
 		return -1;
 	}
@@ -42,7 +40,7 @@ int main()
     // add into broadcast group explicitly
     if (setsockopt(sockFd, SOL_NETLINK, NETLINK_ADD_MEMBERSHIP, &group, sizeof(group)) < 0)
 	{
-        perror(pre "setsockopt(NETLINK_ADD_MEMBERSHIP) failed");
+        user_error("setsockopt(NETLINK_ADD_MEMBERSHIP) failed");
         close(sockFd);
         return -1;
     }	
@@ -57,7 +55,7 @@ int main()
 		ssize_t len = recv(sockFd, buffer, sizeof(buffer) - 1, 0);
 		if(len < 0)
 		{
-			perror(pre "receive message from kernel failed!");
+			user_error("receive message from kernel failed!");
 			continue;
 		}
 		
@@ -65,12 +63,12 @@ int main()
 		struct pzx_netlink_msg *pkmsg = (struct pzx_netlink_msg *)NLMSG_DATA(nlh);
 		if(PTR_INVALID(pkmsg))
 		{
-			printf(pre "receive invalid message.\n");
+			user_info("receive invalid message.\n");
 			continue;
 		}
 		snprintf(data, MSG_PAYLOAD_MAXLEN, "user receive message 0x%x.", pkmsg->msgId);
 		send_netlink_message(sockFd, &destAddr, pkmsg->msgId, strlen(data) + 1, data);
-		printf(pre "kernel message: \'%s\'\n", pkmsg->payloadLen ? pkmsg->payload : "nul");
+		user_info("kernel message: \'%s\'\n", pkmsg->payloadLen ? pkmsg->payload : "nul");
 	}
 	
 	close(sockFd);
@@ -105,7 +103,7 @@ static void send_netlink_message(int sock, struct sockaddr_nl *dest, unsigned in
     msg.msg_iovlen = 1;
 
     if (sendmsg(sock, &msg, 0) < 0)
-        perror(pre "send message to kernel failed!");
+        user_error("send message to kernel failed!");
 	
 	return ;
 }

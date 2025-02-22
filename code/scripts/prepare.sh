@@ -3,7 +3,7 @@
 echo "----- make prepare -----"
 
 CUSKERNEL_LINK="$KERNEL_DIR/cuskernel"
-CUSKERNEL_TARGET="$CUSKERNEL_DIR/kernel"
+CUSKERNEL_TARGET="$CUSKERNEL_DIR"
 
 if [ ! -d $ROOT_DIR ]; then
 	mkdir -p $ROOT_DIR

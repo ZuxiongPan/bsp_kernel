@@ -1,8 +1,1 @@
 obj-m := virt.o
-PWD := $(shell pwd)
-
-all:
-	make ARCH=$(ARCHITECTURE) CROSS_COMPILE=$(CROSS_COMPILER_PREFIX) -C $(KERNEL_DIR) M=$(PWD) modules
-	
-clean:
-	make ARCH=$(ARCHITECTURE) CROSS_COMPILE=$(CROSS_COMPILER_PREFIX) -C $(KERNEL_DIR) M=$(PWD) clean

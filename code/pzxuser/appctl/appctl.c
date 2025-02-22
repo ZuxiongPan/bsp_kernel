@@ -1,11 +1,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <stdio.h>
 #include <string.h>
+#include <user/user_log.h>
 #include <ukcomm/comm_ioctl.h>
-
-#define PREV "[user]: "
 
 const char devname[] = "/dev/virtdev";
 const char optstr[] = "t:";
@@ -44,8 +42,8 @@ static unsigned int cmd_test(const char *arg, struct ioctl_data *pdata)
 	else
 		ret = -1;
 	
-	printf(PREV"ioctl cmd is %x\n", ret);
-	printf(PREV"ioctl data info: len is %d, data is %s\n", pdata->dataLen, pdata->buf[0] ? pdata->buf : "nul");
+	user_debug("ioctl cmd is %x\n", ret);
+	user_debug("ioctl data info: len is %d, data is %s\n", pdata->dataLen, pdata->buf[0] ? pdata->buf : "nul");
 	return ret;
 }
 
@@ -65,7 +63,7 @@ int main(int argc, char **argv)
 	int fd = open(devname, O_RDWR);
 	if(fd < 0)
 	{
-		printf("open device %s failed\n", devname);
+		user_error("open device %s failed\n", devname);
 		return -1;
 	}
 	
@@ -78,13 +76,13 @@ int main(int argc, char **argv)
 				cmd = cmd_test(optarg, &udata);
 				ret = ioctl(fd, cmd, &udata);
 				if(ret < 0)
-					printf("ioctl device %s error, ioctl cmd %x\n", devname, cmd);
+					user_error("ioctl device %s error, ioctl cmd %x\n", devname, cmd);
 				else
 				{
 					if(udata.dataLen != 0)
-						printf(PREV"data info: len %d, content %s\n", udata.dataLen, udata.buf);
+						user_debug("data info: len %d, content %s\n", udata.dataLen, udata.buf);
 					else
-						printf(PREV"here is no data\n");
+						user_debug("here is no data\n");
 				}
 				break;
 			default:
