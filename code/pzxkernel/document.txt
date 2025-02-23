@@ -1,0 +1,15 @@
+pzxkernel export symbols usage:
+
+ssize_t devfop_defread(struct file *file, char __user *buf, size_t count, loff_t *ppos);
+	This function is used for character device read function in struct file_operations.
+	If you do not want use .read function in file_operations, you can use this.
+	
+ssize_t devfop_defwrite(struct file *file, const char __user *buf, size_t count, loff_t *ppos);
+	This function is used for character device write function in struct file_operations.
+	If you do not want use .write function in file_operations, you can use this.
+	
+void kernel_asyn_msg(unsigned int msgId, unsigned int payloadLen, void *msgData);
+	This function is used for send message from kernel to user, arguments explanation:
+	msgId - the message ID for recognization, defined in file [include/ukcomm/netlink_msgid.h]
+	payloadLen - the length of message will send, max length is defined in file [include/ukcomm/comm_netlink.h]
+	msgData - the content of kernel message

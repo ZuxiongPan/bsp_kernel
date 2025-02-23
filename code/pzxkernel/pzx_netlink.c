@@ -7,20 +7,51 @@
 #include <linux/string.h>
 #include <linux/delay.h>
 #include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/timer.h>
+#include <linux/kernel.h>
 #include <kern/kern_log.h>
 #include <ukcomm/comm_netlink.h>
 #include <ukcomm/netlink_msgid.h>
 #include <ukcomm/comm_funcs.h>
 
-#define CONFIG_PZXNETLINK_TEST
-#ifdef CONFIG_PZXNETLINK_TEST
-#include <linux/timer.h>
-#include <linux/kernel.h>
-
-static struct timer_list sTimer;
-#endif
+// use self-defined list
+struct msg_node {
+	unsigned char status;	// 0 - not received, 1 - received
+	struct pzx_netlink_msg msg;
+	struct msg_node *next;
+};
 
 static struct sock *pzxSock = NULL;
+static DEFINE_MUTEX(queLock);
+static struct msg_node *queue = NULL;
+static struct timer_list queTimer;	// timer for clean message queue
+
+static void add_message_to_queue(unsigned int msgId, unsigned int payloadLen, void *msgData)
+{
+	unsigned int payloadRealLen = payloadLen > MSG_PAYLOAD_MAXLEN ? MSG_PAYLOAD_MAXLEN : payloadLen;
+	struct msg_node *pMsg = (struct msg_node *)kzalloc(sizeof(struct msg_node) + payloadRealLen, GFP_KERNEL);
+	if(PTR_INVALID(pMsg))
+	{
+		kern_error("add message %x to queue failed!\n", msgId);
+		return ;
+	}
+	
+	pMsg->status = 0;
+	pMsg->msg.msgId = msgId;
+	pMsg->msg.payloadLen = payloadRealLen;
+	if(payloadLen > 0)
+		memcpy(pMsg->msg.payload, msgData, payloadRealLen);
+	pMsg->next = NULL;
+	
+	mutex_lock(&queLock);
+	pMsg->next = queue;
+	queue = pMsg;	// add from header
+	mutex_unlock(&queLock);
+	
+	return ;
+}
 
 static struct sk_buff* make_message(unsigned int msgId, unsigned int payloadLen, void *msgData)
 {
@@ -51,7 +82,6 @@ static struct sk_buff* make_message(unsigned int msgId, unsigned int payloadLen,
 	return skb;
 }
 
-// this function only send MSG_FUNCTIONAL
 void kernel_asyn_msg(unsigned int msgId, unsigned int payloadLen, void *msgData)
 {
 	struct sk_buff* skb = make_message(msgId, payloadLen, msgData);
@@ -61,27 +91,40 @@ void kernel_asyn_msg(unsigned int msgId, unsigned int payloadLen, void *msgData)
 		return ;
 	}
 	
+	add_message_to_queue(msgId, payloadLen, msgData);	// cache in queue
 	netlink_broadcast(pzxSock, skb, 0, NTELINK_PZXGROUP, GFP_KERNEL);
 	
 	return ;
 }
+EXPORT_SYMBOL(kernel_asyn_msg);
 
-#ifdef CONFIG_PZXNETLINK_TEST
-void sender_test(struct timer_list *timer)
+static void queue_monitor(struct timer_list *timer)
 {
-	char buffer[MSG_PAYLOAD_MAXLEN];
-	static unsigned int cnt = 0;
-	static unsigned int id = TEST_NLMSG;
+	if(PTR_INVALID(queue))
+		kern_debug("the message queue is empty.\n");
 	
-	kern_info("send times: %d\n", cnt++);
+	mutex_lock(&queLock);
+	kern_debug("message queue info:\n");
+	struct msg_node *pos = queue;
+	struct msg_node *next = pos->next;
+	while(!PTR_INVALID(pos))
+	{
+		kern_debug("message id 0x%x, status %d, content:\n", pos->msg.msgId, pos->status);
+		kern_hexdump(pos->msg.payload, pos->msg.payloadLen);
+		if(pos->status)	// message needs release
+		{
+			struct msg_node *tmp = pos;
+			if(pos == queue)	// queue head
+				queue = next;
+			kfree(tmp);
+		}
+		pos = next;
+		next = pos ? pos->next : NULL;
+	}
+	mutex_unlock(&queLock);
 	
-	snprintf(buffer, MSG_PAYLOAD_MAXLEN, "this is a message from kernel, id 0x%x.", id);
-	kernel_asyn_msg(id, strlen(buffer) + 1, buffer);
-	id += 8;
-	
-	mod_timer(&sTimer, jiffies + msecs_to_jiffies(8000));
+	mod_timer(&queTimer, jiffies + msecs_to_jiffies(10000));
 }
-#endif
 
 static void pzx_netlink_recv(struct sk_buff *skb)
 {
@@ -94,11 +137,25 @@ static void pzx_netlink_recv(struct sk_buff *skb)
 		
 		struct pzx_netlink_msg *pumsg = NLMSG_DATA(nlh);
 		
+		// modify message queue that message has received
+		mutex_lock(&queLock);
+		struct msg_node *pos = queue;
+		while(!PTR_INVALID(pos))
+		{
+			if(pos->msg.msgId == pumsg->msgId)
+			{
+				pos->status = 1;	// message has received
+				break; // the first match message will be released
+			}
+			pos = pos->next;
+		}
+		mutex_unlock(&queLock);
+		
 		switch(pumsg->msgId)
 		{
 			default:
 				// here means a message with data has been sent to user and user receive it success.
-				kern_info("message id 0x%x is received\n", pumsg->msgId);
+				kern_debug("message id 0x%x is received\n", pumsg->msgId);
 				break;
 		}
 	}
@@ -119,13 +176,11 @@ static int pzx_netlink_init(struct net *net)
 		kern_error("netlink socket create failed, reason: no memory!\n");
 		return -ENODEV;
 	}
+
+	timer_setup(&queTimer, queue_monitor, 0);
+	mod_timer(&queTimer, jiffies + msecs_to_jiffies(10000));	// every 10s monitor queue
 	
 	kern_info("netlink socket create success!\n");
-
-#ifdef CONFIG_PZXNETLINK_TEST
-	timer_setup(&sTimer, sender_test, 0);
-	mod_timer(&sTimer, jiffies + msecs_to_jiffies(5000));
-#endif
 	
 	return 0;
 }
@@ -135,11 +190,19 @@ static void pzx_netlink_exit(struct net *net)
 	if(!PTR_INVALID(pzxSock))
 		netlink_kernel_release(pzxSock);
 	
-	kern_info("netlink release ok!\n");
+	del_timer(&queTimer);
 	
-#ifdef CONFIG_PZXNETLINK_TEST
-	del_timer(&sTimer);
-#endif
+	mutex_lock(&queLock);
+	struct msg_node *pos = queue;
+	while(!PTR_INVALID(pos))
+	{
+		struct msg_node *tmp = pos;
+		pos = pos->next;
+		kfree(tmp);
+	}
+	mutex_unlock(&queLock);
+	
+	kern_info("netlink release ok!\n");
 	
 	return ;
 }
@@ -157,4 +220,3 @@ static int __init pzx_netlink_socket_init(void)
 postcore_initcall(pzx_netlink_socket_init);
 
 #endif	// CONFIG_NET
-

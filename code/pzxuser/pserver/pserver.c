@@ -68,7 +68,8 @@ int main()
 		}
 		snprintf(data, MSG_PAYLOAD_MAXLEN, "user receive message 0x%x.", pkmsg->msgId);
 		send_netlink_message(sockFd, &destAddr, pkmsg->msgId, strlen(data) + 1, data);
-		user_info("kernel message: \'%s\'\n", pkmsg->payloadLen ? pkmsg->payload : "nul");
+		user_info("mount message:\n");
+		printf("data: %s\n", pkmsg->payload);
 	}
 	
 	close(sockFd);

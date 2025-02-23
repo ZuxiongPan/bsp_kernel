@@ -11,9 +11,9 @@ mean	type	module	id
 #define GET_NLMSG_TYPE(id) (((id) >> 28) & 0xf)
 #define GET_NLMSG_MODULE(id) (((id) >> 16) & 0xfff)
 
-#define TEST_NLMSG_TYPE 0x8
+#define FILESYSTEM_NLMSG_MODULE 0x1
 
-#define TEST_NLMSGHEADER MAKE_MSGHEADER(TEST_NLMSG_TYPE, 0x5af)
-#define TEST_NLMSG (TEST_NLMSGHEADER + 1)
+#define FS_NLMSGHEADER MAKE_MSGHEADER(0, FILESYSTEM_NLMSG_MODULE)
+#define FS_NLMSG_MOUNT (FS_NLMSGHEADER + 1)
 
 #endif
