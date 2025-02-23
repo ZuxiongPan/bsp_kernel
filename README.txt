@@ -31,23 +31,23 @@ Qemu simulate for arm-architecture, board bpim2u
 Directories in project:
 
 .
-├── code			[customized code directory]
+├── code		[customized code directory]
+| ├── configs		[user/kernel customized configs]
 │ ├── include		
 │ │   ├── kern		[kernel header files]
+| |   ├── user		[user header files]
 │ │   └── ukcomm	[kernel and user common header files]
 │ ├── pzxkernel
 │ │   ├── drivers	[customized kernel drivers]
-│ │   └── kernel	[customized kernel code]
-│ ├── pzxuser
-│ │   └── applications	[user applications]
+│ │   └── other files	[customized kernel code]
+│ ├── pzxuser		[user applications]
 │ └── scripts		[compile scripts]
-│     └── etc
+│     └── etc		[rootfs-etc directory]
 ├── linux-6.6		[linux kernel source]
-├── target			[zImage, dtb and rootfs]
+├── target		[zImage, dtb and rootfs]
 └── tools
     ├── arm-linux-gnueabihf-14.0.0	[cross-compiler]
     └── busybox-1.36.0	[busybox directory]
 	
 code version 1.0.0
 code author pzx
-
