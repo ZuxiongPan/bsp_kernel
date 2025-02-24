@@ -32,10 +32,10 @@ Directories in project:
 
 .
 ├── code		[customized code directory]
-| ├── configs		[user/kernel customized configs]
+│ ├── configs		[user/kernel customized configs]
 │ ├── include		
 │ │   ├── kern		[kernel header files]
-| |   ├── user		[user header files]
+│ │   ├── user		[user header files]
 │ │   └── ukcomm	[kernel and user common header files]
 │ ├── pzxkernel
 │ │   ├── drivers	[customized kernel drivers]
@@ -51,3 +51,4 @@ Directories in project:
 	
 code version 1.0.0
 code author pzx
+

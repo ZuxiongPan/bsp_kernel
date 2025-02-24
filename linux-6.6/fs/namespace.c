@@ -32,8 +32,6 @@
 #include <linux/fs_context.h>
 #include <linux/shmem_fs.h>
 #include <linux/mnt_idmapping.h>
-#include <ukcomm/comm_netlink.h>
-#include <ukcomm/netlink_msgid.h>
 
 #include "pnode.h"
 #include "internal.h"
@@ -3860,7 +3858,6 @@ struct dentry *mount_subtree(struct vfsmount *m, const char *name)
 }
 EXPORT_SYMBOL(mount_subtree);
 
-extern void kernel_asyn_msg(unsigned int msgId, unsigned int payloadLen, void *msgData);
 SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
 		char __user *, type, unsigned long, flags, void __user *, data)
 {
@@ -3883,9 +3880,6 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
 	ret = PTR_ERR(options);
 	if (IS_ERR(options))
 		goto out_data;
-
-	char buf[] = "this is a message from filesystem.";
-	kernel_asyn_msg(FS_NLMSG_MOUNT, strlen(buf) + 1, buf);
 
 	ret = do_mount(kernel_dev, dir_name, kernel_type, flags, options);
 

@@ -143,10 +143,7 @@ static void pzx_netlink_recv(struct sk_buff *skb)
 		while(!PTR_INVALID(pos))
 		{
 			if(pos->msg.msgId == pumsg->msgId)
-			{
-				pos->status = 1;	// message has received
-				break; // the first match message will be released
-			}
+				pos->status = 1;	// the message with same id has received
 			pos = pos->next;
 		}
 		mutex_unlock(&queLock);
