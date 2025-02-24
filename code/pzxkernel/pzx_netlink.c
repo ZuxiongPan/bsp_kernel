@@ -101,7 +101,10 @@ EXPORT_SYMBOL(kernel_asyn_msg);
 static void queue_monitor(struct timer_list *timer)
 {
 	if(PTR_INVALID(queue))
+	{
 		kern_debug("the message queue is empty.\n");
+		return ;	// empty queue no need to modify
+	}
 	
 	mutex_lock(&queLock);
 	kern_debug("message queue info:\n");
