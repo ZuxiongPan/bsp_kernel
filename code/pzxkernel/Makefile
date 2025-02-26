@@ -1,3 +1,5 @@
+include $(CONFIG_DIR)/pzx_kernel_config
+
 PWD := $(shell pwd)
 
 obj-y += export_funcs.o
